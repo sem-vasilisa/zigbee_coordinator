@@ -1,3 +1,0 @@
-"ncs-zigbee":"/home/goodbyte/projects/workspace_zigbee/ncs-zigbee":"/home/goodbyte/projects/workspace_zigbee/ncs-zigbee/sysbuild"
-"nrf":"/home/goodbyte/projects/workspace_zigbee/nrf":"/home/goodbyte/projects/workspace_zigbee/nrf/sysbuild"
-"mcuboot":"/home/goodbyte/projects/workspace_zigbee/bootloader/mcuboot":"/home/goodbyte/projects/workspace_zigbee/bootloader/mcuboot/boot/zephyr/sysbuild"

@@ -1,7 +1,0 @@
-default: zigbee-coordinator
-build_dir: /home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build
-domains:
-  - name: zigbee-coordinator
-    build_dir: /home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/zigbee-coordinator
-flash_order:
-  - zigbee-coordinator
