@@ -1,0 +1,46 @@
+[0/5] Performing build step for 'zigbee-coordinator'
+[0/1] Re-running CMake...
+Loading Zephyr default modules (Zephyr base (cached)).
+-- Application: /home/goodbyte/projects/workspace_zigbee/zigbee-coordinator
+-- CMake version: 3.21.0
+-- Cache files will be written to: /home/goodbyte/.cache/zephyr
+-- Zephyr version: 3.7.99 (/home/goodbyte/projects/workspace_zigbee/zephyr)
+-- Found west (found suitable version "1.2.0", minimum required is "0.14.0")
+-- Board: nrf52840dongle, qualifiers: nrf52840
+-- Found host-tools: zephyr 0.17.0 (/home/goodbyte/ncs/toolchains/b77d8c1312/opt/zephyr-sdk)
+-- Found toolchain: zephyr 0.17.0 (/home/goodbyte/ncs/toolchains/b77d8c1312/opt/zephyr-sdk)
+-- Found BOARD.dts: /home/goodbyte/projects/workspace_zigbee/zephyr/boards/nordic/nrf52840dongle/nrf52840dongle_nrf52840.dts
+-- Found devicetree overlay: /home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/boards/nrf52840dongle_nrf52840.overlay
+-- Generated zephyr.dts: /home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/zigbee-coordinator/zephyr/zephyr.dts
+-- Generated devicetree_generated.h: /home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/zigbee-coordinator/zephyr/include/generated/zephyr/devicetree_generated.h
+-- Including generated dts.cmake file: /home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/zigbee-coordinator/zephyr/dts.cmake
+
+warning: the value '3 # 3 specifically corresponds to INF severity — this sets the minimum severity shown' is invalid for LOG_DEFAULT_LEVEL (defined at subsys/logging/Kconfig.filtering:13), which has type int -- assignment ignored
+Parsing /home/goodbyte/projects/workspace_zigbee/zephyr/Kconfig
+Loaded configuration '/home/goodbyte/projects/workspace_zigbee/zephyr/boards/nordic/nrf52840dongle/nrf52840dongle_nrf52840_defconfig'
+Merged configuration '/home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/prj.conf'
+Merged configuration '/home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/zigbee-coordinator/zephyr/misc/generated/extra_kconfig_options.conf'
+Merged configuration '/home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/zigbee-coordinator/zephyr/.config.sysbuild'
+
+error: Aborting due to Kconfig warnings
+
+CMake Error at /home/goodbyte/projects/workspace_zigbee/zephyr/cmake/modules/kconfig.cmake:396 (message):
+  command failed with return code: 1
+Call Stack (most recent call first):
+  /home/goodbyte/projects/workspace_zigbee/nrf/cmake/modules/kconfig.cmake:29 (include)
+  /home/goodbyte/projects/workspace_zigbee/zephyr/cmake/modules/zephyr_default.cmake:133 (include)
+  /home/goodbyte/projects/workspace_zigbee/zephyr/share/zephyr-package/cmake/ZephyrConfig.cmake:66 (include)
+  /home/goodbyte/projects/workspace_zigbee/zephyr/share/zephyr-package/cmake/ZephyrConfig.cmake:97 (include_boilerplate)
+  CMakeLists.txt:11 (find_package)
+
+
+-- Configuring incomplete, errors occurred!
+See also "/home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/zigbee-coordinator/CMakeFiles/CMakeOutput.log".
+See also "/home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/zigbee-coordinator/CMakeFiles/CMakeError.log".
+FAILED: build.ninja 
+/home/goodbyte/ncs/toolchains/b77d8c1312/usr/local/bin/cmake --regenerate-during-build -S/home/goodbyte/projects/workspace_zigbee/zigbee-coordinator -B/home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/zigbee-coordinator
+ninja: error: rebuilding 'build.ninja': subcommand failed
+FAILED: _sysbuild/sysbuild/images/zigbee-coordinator-prefix/src/zigbee-coordinator-stamp/zigbee-coordinator-build /home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/_sysbuild/sysbuild/images/zigbee-coordinator-prefix/src/zigbee-coordinator-stamp/zigbee-coordinator-build 
+cd /home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/zigbee-coordinator && /home/goodbyte/ncs/toolchains/b77d8c1312/usr/local/bin/cmake --build .
+ninja: build stopped: subcommand failed.
+FATAL ERROR: command exited with status 1: /home/goodbyte/ncs/toolchains/b77d8c1312/usr/local/bin/cmake --build /home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build

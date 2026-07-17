@@ -1,0 +1,2 @@
+# Load board Kconfig descriptions.
+osource "/home/goodbyte/projects/workspace_zigbee/zephyr/boards/nordic/nrf52840dongle/Kconfig.nrf52840dongle"
