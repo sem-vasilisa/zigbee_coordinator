@@ -1,0 +1,13 @@
+# Target labels
+ zigbee-coordinator
+# Source files and their labels
+/home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/_sysbuild/sysbuild/images/CMakeFiles/zigbee-coordinator
+/home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/_sysbuild/sysbuild/images/CMakeFiles/zigbee-coordinator.rule
+/home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/_sysbuild/sysbuild/images/CMakeFiles/zigbee-coordinator-complete.rule
+/home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/_sysbuild/sysbuild/images/zigbee-coordinator-prefix/src/zigbee-coordinator-stamp/zigbee-coordinator-build.rule
+/home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/_sysbuild/sysbuild/images/zigbee-coordinator-prefix/src/zigbee-coordinator-stamp/zigbee-coordinator-configure.rule
+/home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/_sysbuild/sysbuild/images/zigbee-coordinator-prefix/src/zigbee-coordinator-stamp/zigbee-coordinator-download.rule
+/home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/_sysbuild/sysbuild/images/zigbee-coordinator-prefix/src/zigbee-coordinator-stamp/zigbee-coordinator-install.rule
+/home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/_sysbuild/sysbuild/images/zigbee-coordinator-prefix/src/zigbee-coordinator-stamp/zigbee-coordinator-mkdir.rule
+/home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/_sysbuild/sysbuild/images/zigbee-coordinator-prefix/src/zigbee-coordinator-stamp/zigbee-coordinator-patch.rule
+/home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/_sysbuild/sysbuild/images/zigbee-coordinator-prefix/src/zigbee-coordinator-stamp/zigbee-coordinator-update.rule

@@ -1,0 +1,11 @@
+# Load Zephyr Arch Kconfig descriptions.
+osource "/home/goodbyte/projects/workspace_zigbee/zephyr/arch/x86/Kconfig"
+osource "/home/goodbyte/projects/workspace_zigbee/zephyr/arch/xtensa/Kconfig"
+osource "/home/goodbyte/projects/workspace_zigbee/zephyr/arch/sparc/Kconfig"
+osource "/home/goodbyte/projects/workspace_zigbee/zephyr/arch/riscv/Kconfig"
+osource "/home/goodbyte/projects/workspace_zigbee/zephyr/arch/posix/Kconfig"
+osource "/home/goodbyte/projects/workspace_zigbee/zephyr/arch/nios2/Kconfig"
+osource "/home/goodbyte/projects/workspace_zigbee/zephyr/arch/mips/Kconfig"
+osource "/home/goodbyte/projects/workspace_zigbee/zephyr/arch/arm64/Kconfig"
+osource "/home/goodbyte/projects/workspace_zigbee/zephyr/arch/arm/Kconfig"
+osource "/home/goodbyte/projects/workspace_zigbee/zephyr/arch/arc/Kconfig"

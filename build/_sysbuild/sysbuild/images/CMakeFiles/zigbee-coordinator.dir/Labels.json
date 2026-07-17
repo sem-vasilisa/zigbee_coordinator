@@ -1,0 +1,43 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/_sysbuild/sysbuild/images/CMakeFiles/zigbee-coordinator"
+		},
+		{
+			"file" : "/home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/_sysbuild/sysbuild/images/CMakeFiles/zigbee-coordinator.rule"
+		},
+		{
+			"file" : "/home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/_sysbuild/sysbuild/images/CMakeFiles/zigbee-coordinator-complete.rule"
+		},
+		{
+			"file" : "/home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/_sysbuild/sysbuild/images/zigbee-coordinator-prefix/src/zigbee-coordinator-stamp/zigbee-coordinator-build.rule"
+		},
+		{
+			"file" : "/home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/_sysbuild/sysbuild/images/zigbee-coordinator-prefix/src/zigbee-coordinator-stamp/zigbee-coordinator-configure.rule"
+		},
+		{
+			"file" : "/home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/_sysbuild/sysbuild/images/zigbee-coordinator-prefix/src/zigbee-coordinator-stamp/zigbee-coordinator-download.rule"
+		},
+		{
+			"file" : "/home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/_sysbuild/sysbuild/images/zigbee-coordinator-prefix/src/zigbee-coordinator-stamp/zigbee-coordinator-install.rule"
+		},
+		{
+			"file" : "/home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/_sysbuild/sysbuild/images/zigbee-coordinator-prefix/src/zigbee-coordinator-stamp/zigbee-coordinator-mkdir.rule"
+		},
+		{
+			"file" : "/home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/_sysbuild/sysbuild/images/zigbee-coordinator-prefix/src/zigbee-coordinator-stamp/zigbee-coordinator-patch.rule"
+		},
+		{
+			"file" : "/home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/_sysbuild/sysbuild/images/zigbee-coordinator-prefix/src/zigbee-coordinator-stamp/zigbee-coordinator-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"zigbee-coordinator"
+		],
+		"name" : "zigbee-coordinator"
+	}
+}

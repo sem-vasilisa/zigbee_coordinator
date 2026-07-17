@@ -1,0 +1,13 @@
+# WARNING. THIS FILE IS AUTO-GENERATED. DO NOT MODIFY!
+#
+# This file contains build system settings derived from your modules.
+#
+# Modules may be set via ZEPHYR_MODULES, ZEPHYR_EXTRA_MODULES,
+# and/or the west manifest file.
+#
+# See the Modules guide for more information.
+"BOARD_ROOT":"/home/goodbyte/projects/workspace_zigbee/nrf"
+"DTS_ROOT":"/home/goodbyte/projects/workspace_zigbee/nrf"
+"SNIPPET_ROOT":"/home/goodbyte/projects/workspace_zigbee/nrf"
+"MODULE_EXT_ROOT":"/home/goodbyte/projects/workspace_zigbee/nrf"
+"SOC_ROOT":"/home/goodbyte/projects/workspace_zigbee/modules/soc-hwmv1"

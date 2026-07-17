@@ -1,0 +1,14 @@
+[00:00:00.000,464] [0m<inf> ieee802154_nrf5: nRF5 802154 radio initialized[0m
+[00:00:00.002,965] [1;31m<err> spi_nor: Device id 00 00 00 does not match config c2 28 17[0m
+*** Booting nRF Connect SDK v2.9.2-4ab7b98fc76f ***
+*** Using Zephyr OS v3.7.99-aa34a5632971 ***
+[00:00:00.005,391] [0m<inf> app: Starting Zigbee R23 Light Bulb example[0m
+[00:00:00.007,694] [0m<inf> fs_nvs: 2 Sectors of 4096 bytes[0m
+[00:00:00.007,864] [0m<inf> fs_nvs: alloc wra: 0, fd0[0m
+[00:00:00.008,011] [0m<inf> fs_nvs: data wra: 0, 0[0m
+[00:00:00.008,377] [0m<inf> app: Set level value: 255[0m
+[00:00:00.012,[00:00:00.013,539] [0m<inf> zigbee_app_utils: Production configuration is not present or invalid (status: -1)[0m
+[00:00:00.013,961] [0m<inf> zigbee_app_utils: Zigbee stack initialized[0m
+733] [0m<inf> app: Zigbee R23 Light Bulb example started[0m
+[00:00:00.055,678] [0m<inf> zigbee_app_utils: Unimplemented signal (signal: 59, status: 0)[0m
+[00:00:00.056,806] [0m<inf> zigbee_app_utils: Joined netwo
