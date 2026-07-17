@@ -10,6 +10,8 @@
 
 #include <zephyr/logging/log.h>
 
+#include <zephyr/shell/shell.h> /* aktywujemy shell */
+
 // LOG_MODULE_REGISTER(app, LOG_LEVEL_INF);   /* obok pozostałych #include */
 
 LOG_MODULE_REGISTER(zigbee_coordinator, LOG_LEVEL_INF);
@@ -19,8 +21,8 @@ LOG_MODULE_REGISTER(zigbee_coordinator, LOG_LEVEL_INF);
 
 /* toggle i przycisk*/
 #define SW_NODE DT_ALIAS(sw0)             /* SW1 na donglu */
-static const struct gpio_dt_spec button = GPIO_DT_SPEC_GET(SW_NODE, gpios);
-static struct gpio_callback button_cb;
+static const struct gpio_dt_spec button = GPIO_DT_SPEC_GET(SW_NODE, gpios); /* gpio pin info */
+static struct gpio_callback button_cb; /* structure to register interrupt handler for that pin */
 
 /* here we will store end-device information */
 static struct {
@@ -121,23 +123,24 @@ static void send_active_ep_req(zb_bufid_t bufid)
     req->nwk_addr = dev.short_addr; /* fill in which device are we asking, by short address*/
     zb_zdo_active_ep_req(bufid, active_ep_cb); /* send the request, when the response comes back, call active_ep_cb */
 }
-
+/* runs on a zboss thread */
 static void send_toggle_cmd(zb_bufid_t bufid)   /* już w wątku ZBOSS */
 {
-    if (!dev.bound) { zb_buf_free(bufid); return; }
+    if (!dev.bound) { zb_buf_free(bufid); return; } /* if device is not bound, free the buffer and return */
     LOG_INF("Sending Toggle to 0x%04x EP %d", dev.short_addr, dev.remote_ep);
     ZB_ZCL_ON_OFF_SEND_TOGGLE_REQ(bufid, dev.short_addr,
         ZB_APS_ADDR_MODE_16_ENDP_PRESENT,   /* adresowanie jawne: short + EP */
         dev.remote_ep, COORD_EP,
-        ZB_AF_HA_PROFILE_ID, ZB_ZCL_DISABLE_DEFAULT_RESPONSE, NULL);
+        ZB_AF_HA_PROFILE_ID, ZB_ZCL_DISABLE_DEFAULT_RESPONSE, NULL); /* sends a ZCL toggle command */
 }
 
+/* ISR for button press */
 static void button_pressed(const struct device *port,
                            struct gpio_callback *cb, uint32_t pins)
 {
     /* To jest ISR — NIE wolno tu wołać API ZBOSS bezpośrednio.
      * Delegujemy do wątku ZBOSS przez pobranie bufora. */
-    zb_buf_get_out_delayed(send_toggle_cmd);
+    zb_buf_get_out_delayed(send_toggle_cmd); /* grabs a buffer and schedules the toggle command */
 }
 
 
@@ -163,6 +166,7 @@ static void app_clusters_attr_init(void)
         ZB_ZCL_IDENTIFY_IDENTIFY_TIME_DEFAULT_VALUE;
 }
 
+/*gets called from the ZBOSS thread when a new device joins the network*/
 static void handle_device_joined(zb_uint16_t short_addr, const zb_ieee_addr_t ieee)
 {
     // LOG_INF("=====================================================");
@@ -172,13 +176,13 @@ static void handle_device_joined(zb_uint16_t short_addr, const zb_ieee_addr_t ie
     //     ieee[3], ieee[2], ieee[1], ieee[0]);
     // LOG_INF("=====================================================");
 
-    if (dev.used) return;                 /* obsługujemy jedno urządzenie */
-    dev.used = true;
-    dev.bound = false;
+    if (dev.used) return;                 /* handels one device at a time */
+    dev.used = true; /* occupied */
+    dev.bound = false; /* reset bounding */
     dev.short_addr = short_addr;
-    ZB_MEMCPY(dev.ieee, ieee, sizeof(zb_ieee_addr_t));
+    ZB_MEMCPY(dev.ieee, ieee, sizeof(zb_ieee_addr_t)); /* copy device IEEE address to our memory */
     LOG_INF("New device 0x%04x — starting discovery", short_addr);
-    zb_buf_get_out_delayed(send_active_ep_req);
+    zb_buf_get_out_delayed(send_active_ep_req); /* request the buffer and schedule the first step of discovery */
 
 }
 
@@ -249,6 +253,36 @@ void zboss_signal_handler(zb_bufid_t bufid)
 
     if (bufid) zb_buf_free(bufid); // if buffer not empty - clean
 }
+
+static int cmd_toggle(const struct shell *sh, size_t argc, char **argv)
+{
+    if (!dev.bound) {
+        shell_error(sh, "Brak zbindowanego urządzenia");
+        return -EAGAIN;
+    }
+    zb_buf_get_out_delayed(send_toggle_cmd);   /* przeskok do wątku ZBOSS */
+    shell_print(sh, "Toggle wysłany");
+    return 0;
+}
+
+/* bdb_start_top_level_commissioning musi być wołane z wątku ZBOSS */
+static void do_open_network(zb_uint8_t param)
+{
+    ARG_UNUSED(param);
+    zb_bdb_set_legacy_device_support(1);
+    bdb_start_top_level_commissioning(ZB_BDB_NETWORK_STEERING);
+}
+
+static int cmd_open(const struct shell *sh, size_t argc, char **argv)
+{
+    ARG_UNUSED(argc); ARG_UNUSED(argv);
+    ZB_SCHEDULE_APP_CALLBACK(do_open_network, 0);
+    shell_print(sh, "Sieć otwarta na dołączanie (180 s)");
+    return 0;
+}
+
+SHELL_CMD_REGISTER(toggle, NULL, "Wyślij Toggle do urządzenia", cmd_toggle);
+SHELL_CMD_REGISTER(open,   NULL, "Otwórz sieć na dołączanie (180 s)", cmd_open);
 
 int main(void)
 {
