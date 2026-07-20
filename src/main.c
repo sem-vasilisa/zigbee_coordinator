@@ -1,15 +1,12 @@
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/gpio.h>
-
 #include <zboss_api.h>
 #include <zb_mem_config_max.h>          /* konfiguracja pamięci ZBOSS — WYMAGANE */
 #include <zigbee/zigbee_error_handler.h>
 #include <zigbee/zigbee_app_utils.h>    /* zigbee_enable(), default handler */
 #include <zb_nrf_platform.h>
 #include "zb_range_extender.h"
-
 #include <zephyr/logging/log.h>
-
 #include <zephyr/shell/shell.h> /* aktywujemy shell */
 
 // LOG_MODULE_REGISTER(app, LOG_LEVEL_INF);   /* obok pozostałych #include */
@@ -18,13 +15,11 @@ LOG_MODULE_REGISTER(zigbee_coordinator, LOG_LEVEL_INF);
 
 #define LED_NODE DT_ALIAS(led0)
 #define COORD_EP  10   /* endpoint On/Off clienta, taki sam jak ustawiliśmy w pierwszym kroku  */
-
-/* toggle i przycisk*/
 #define SW_NODE DT_ALIAS(sw0)             /* SW1 na donglu */
-static const struct gpio_dt_spec button = GPIO_DT_SPEC_GET(SW_NODE, gpios); /* gpio pin info */
-static struct gpio_callback button_cb; /* structure to register interrupt handler for that pin */
 
-/* here we will store end-device information */
+static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(LED_NODE, gpios);
+
+/*  here we will store end-device information  */
 static struct {
     bool           used, bound; /* used = have we seen a device yet, bound = did binding succeed */
     zb_ieee_addr_t ieee;
@@ -32,22 +27,45 @@ static struct {
     zb_uint8_t     remote_ep;   /* endpoint number on the remote device */
 } dev;
 
-/* --- lista endpointów odkrywanego urządzenia --- */
-static struct { zb_uint8_t eps[16], count, idx; } disc; /* eps is a list of enpoint numbers the bulb reported, count how many were returned and idx which one we're currently checking*/
+/* -------- coordinator's device profile -------- */
 
-static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(LED_NODE, gpios);
-
-/* Minimalny kontekst urządzenia ZCL: 1 endpoint (EP 10), Basic + Identify.
- * ZBOSS wymaga zarejestrowanego kontekstu PRZED zigbee_enable(), inaczej crash. */
+/*  clusters declaration  */
 struct zb_device_ctx {
     zb_zcl_basic_attrs_t    basic_attr;
     zb_zcl_identify_attrs_t identify_attr;
 };
 static struct zb_device_ctx dev_ctx;
 
-static void send_simple_desc_req(zb_bufid_t bufid);
+/* which variables belong to which cluster */
+ZB_ZCL_DECLARE_IDENTIFY_ATTRIB_LIST(identify_attr_list, &dev_ctx.identify_attr.identify_time);
+ZB_ZCL_DECLARE_BASIC_ATTRIB_LIST(basic_attr_list, &dev_ctx.basic_attr.zcl_version, &dev_ctx.basic_attr.power_source);
 
-/* if binding succeeds */
+/* the endpoint that connects to those clusters*/
+ZB_DECLARE_SIMPLE_DESC(2, 1);  /* 2 input clusters, 1 output cluster */
+ZB_DECLARE_RANGE_EXTENDER_CLUSTER_LIST(coord_ep1_clusters, basic_attr_list, identify_attr_list); /* put 3 clusters in one cluster list */
+ZB_DECLARE_RANGE_EXTENDER_EP(coord_ep1, 10, coord_ep1_clusters); /* attach cluster list to endpoint 10 */
+
+
+ZBOSS_DECLARE_DEVICE_CTX_1_EP(coordinator_ctx, coord_ep1); /* put everything in one device context */
+
+static void app_clusters_attr_init(void)
+{
+    dev_ctx.basic_attr.zcl_version  = ZB_ZCL_VERSION;
+    dev_ctx.basic_attr.power_source = ZB_ZCL_BASIC_POWER_SOURCE_DC_SOURCE;
+    dev_ctx.identify_attr.identify_time = ZB_ZCL_IDENTIFY_IDENTIFY_TIME_DEFAULT_VALUE;
+}
+
+/* --- create a network sygnalized by led --- */
+static volatile bool network_up = false; // is network ready
+
+/* -------- controlling the bulb with a button -------- */
+
+/*  list of endpoints of the discovered device  */
+static struct { zb_uint8_t eps[16], count, idx; } disc; /* eps is a list of enpoint numbers the bulb reported, count how many were returned and idx which one we're currently checking*/
+
+static void send_simple_desc_req(zb_bufid_t bufid); /* sends a ZDO request about endpoints */
+
+/* if binding succeeds, handle the response */
 static void bind_cb(zb_bufid_t bufid)
 {
     zb_zdo_bind_resp_t *r = (zb_zdo_bind_resp_t *)zb_buf_begin(bufid);
@@ -60,7 +78,7 @@ static void bind_cb(zb_bufid_t bufid)
     }
     zb_buf_free(bufid);
 }
-/* binding*/
+/* binding - connect ep with cluster*/
 static void do_bind(zb_bufid_t bufid)
 {
     zb_zdo_bind_req_param_t *req = ZB_BUF_GET_PARAM(bufid, zb_zdo_bind_req_param_t); /* get a pointer to the bind request parameters */
@@ -76,7 +94,7 @@ static void do_bind(zb_bufid_t bufid)
     zb_zdo_bind_req(bufid, bind_cb);
 }
 
-/* Krok 2: sprawdź, czy na tym EP jest On/Off server */
+/* response to the cluster request*/
 static void simple_desc_cb(zb_bufid_t bufid)
 {
     zb_zdo_simple_desc_resp_t *r = (zb_zdo_simple_desc_resp_t *)zb_buf_begin(bufid);
@@ -93,17 +111,16 @@ static void simple_desc_cb(zb_bufid_t bufid)
     else if (disc.idx < disc.count)  zb_buf_get_out_delayed(send_simple_desc_req); /* continue to the next endpoint */
     else                             LOG_WRN("No On/Off server found");
 }
-
+/* sends a ZDO request asking about endpoints clusters */
 static void send_simple_desc_req(zb_bufid_t bufid)
 {
-    zb_zdo_simple_desc_req_t *req = (zb_zdo_simple_desc_req_t *)
-        zb_buf_initial_alloc(bufid, sizeof(zb_zdo_simple_desc_req_t)); /* reseres place in the buffer for the request */
+    zb_zdo_simple_desc_req_t *req = (zb_zdo_simple_desc_req_t *)zb_buf_initial_alloc(bufid, sizeof(zb_zdo_simple_desc_req_t)); /* reseres place in the buffer for the request */
     req->nwk_addr = dev.short_addr; /* fill in which device are we asking, by short address */
     req->endpoint = disc.eps[disc.idx++]; /* fill in the endpoint we are asking about */
     zb_zdo_simple_desc_req(bufid, simple_desc_cb); /* send the request, when the response comes back, call simple_desc_cb */
 }
 
-/* gets the list of endpoints and saves it */
+/* gets the list of endpoints from end device and saves it */
 static void active_ep_cb(zb_bufid_t bufid)
 {
     zb_zdo_ep_resp_t *r = (zb_zdo_ep_resp_t *)zb_buf_begin(bufid); // gets from the buffer reads header
@@ -118,11 +135,14 @@ static void active_ep_cb(zb_bufid_t bufid)
 /* what endpoints do we have */
 static void send_active_ep_req(zb_bufid_t bufid)
 {
-    zb_zdo_active_ep_req_t *req = (zb_zdo_active_ep_req_t *)
-        zb_buf_initial_alloc(bufid, sizeof(zb_zdo_active_ep_req_t)); /*bufid is a buffer we had before, gets the space inside that buffer for an active_ep_req, write it ino req*/
-    req->nwk_addr = dev.short_addr; /* fill in which device are we asking, by short address*/
-    zb_zdo_active_ep_req(bufid, active_ep_cb); /* send the request, when the response comes back, call active_ep_cb */
+    zb_zdo_active_ep_req_t *req = (zb_zdo_active_ep_req_t *)zb_buf_initial_alloc(bufid, sizeof(zb_zdo_active_ep_req_t));
+    req->nwk_addr = dev.short_addr;
+    zb_zdo_active_ep_req(bufid, active_ep_cb);
 }
+
+static const struct gpio_dt_spec button = GPIO_DT_SPEC_GET(SW_NODE, gpios); /* gpio pin info */
+static struct gpio_callback button_cb; /* structure to register interrupt handler for that pin */
+
 /* runs on a zboss thread */
 static void send_toggle_cmd(zb_bufid_t bufid)   /* już w wątku ZBOSS */
 {
@@ -135,38 +155,13 @@ static void send_toggle_cmd(zb_bufid_t bufid)   /* już w wątku ZBOSS */
 }
 
 /* ISR for button press */
-static void button_pressed(const struct device *port,
-                           struct gpio_callback *cb, uint32_t pins)
+static void button_pressed(const struct device *port, struct gpio_callback *cb, uint32_t pins)
 {
-    /* To jest ISR — NIE wolno tu wołać API ZBOSS bezpośrednio.
-     * Delegujemy do wątku ZBOSS przez pobranie bufora. */
     zb_buf_get_out_delayed(send_toggle_cmd); /* grabs a buffer and schedules the toggle command */
 }
 
-
-ZB_ZCL_DECLARE_IDENTIFY_ATTRIB_LIST(identify_attr_list,
-    &dev_ctx.identify_attr.identify_time);
-ZB_ZCL_DECLARE_BASIC_ATTRIB_LIST(basic_attr_list,
-    &dev_ctx.basic_attr.zcl_version, &dev_ctx.basic_attr.power_source);
-
-ZB_DECLARE_SIMPLE_DESC(2, 1); 
-  /* raz, z literałami: 2 clustery IN + 1 OUT */
-
-ZB_DECLARE_RANGE_EXTENDER_CLUSTER_LIST(coord_ep1_clusters,
-    basic_attr_list, identify_attr_list);
-
-ZB_DECLARE_RANGE_EXTENDER_EP(coord_ep1, 10, coord_ep1_clusters);
-ZBOSS_DECLARE_DEVICE_CTX_1_EP(coordinator_ctx, coord_ep1);
-
-static void app_clusters_attr_init(void)
-{
-    dev_ctx.basic_attr.zcl_version  = ZB_ZCL_VERSION;
-    dev_ctx.basic_attr.power_source = ZB_ZCL_BASIC_POWER_SOURCE_DC_SOURCE;
-    dev_ctx.identify_attr.identify_time =
-        ZB_ZCL_IDENTIFY_IDENTIFY_TIME_DEFAULT_VALUE;
-}
-
-/*gets called from the ZBOSS thread when a new device joins the network*/
+/* -------- looking for an end device --------*/
+/*gets called from the ZBOSS thread when a new device joins the network, records the new device and starts discovery */
 static void handle_device_joined(zb_uint16_t short_addr, const zb_ieee_addr_t ieee)
 {
     // LOG_INF("=====================================================");
@@ -186,9 +181,7 @@ static void handle_device_joined(zb_uint16_t short_addr, const zb_ieee_addr_t ie
 
 }
 
-
-static volatile bool network_up = false; // is network ready
-
+/* handles events from the ZBOSS thread */
 void zboss_signal_handler(zb_bufid_t bufid)
 {
     // get details about the event 
@@ -230,13 +223,13 @@ void zboss_signal_handler(zb_bufid_t bufid)
             }                  /* ← dioda to pokaże */
             break;
 
-        case ZB_ZDO_SIGNAL_DEVICE_ANNCE: {
+        case ZB_ZDO_SIGNAL_DEVICE_ANNCE: {        /* end device get's an id */
             zb_zdo_signal_device_annce_params_t *a =
                 ZB_ZDO_SIGNAL_GET_PARAMS(sg_p, zb_zdo_signal_device_annce_params_t); // treat raw data sg_p as a deice annce
             handle_device_joined(a->device_short_addr, a->ieee_addr);// gets the short and long address and calls the function to handle it
         } break;
 
-        case ZB_ZDO_SIGNAL_DEVICE_AUTHORIZED: {
+        case ZB_ZDO_SIGNAL_DEVICE_AUTHORIZED: {    /* device authorized and now is a prt of network */
             zb_zdo_signal_device_authorized_params_t *auth =
                 ZB_ZDO_SIGNAL_GET_PARAMS(sg_p, zb_zdo_signal_device_authorized_params_t); // extracts the authorization parameters from the signal
             // normal login from new zigbee success || older device login success, puts it into a normal state and calls the function to handle it
@@ -246,13 +239,34 @@ void zboss_signal_handler(zb_bufid_t bufid)
             }
         } break;
 
+        /* for unimplemented signals we add cases in event handler so they no longer fall to through to the default case */
+        /* network open/closed for joining changed; permit_duration = seconds left open, 0 = closed */
+        /* unimplemented signal 53 */
+        case ZB_NWK_SIGNAL_PERMIT_JOIN_STATUS: {
+            zb_nlme_permit_joining_signal_info_t *p =
+                ZB_ZDO_SIGNAL_GET_PARAMS(sg_p, zb_nlme_permit_joining_signal_info_t);
+            LOG_INF("Permit join status: %s", p->permit_duration ? "OPEN" : "CLOSED");
+        } break;
+
+        /* unimplemented signal 59 */
+        case ZB_TCSWAP_DB_BACKUP_REQUIRED_SIGNAL:
+            LOG_INF("Trust Center DB backup required");
+            break;
+        
+        /* unimplemented signal 52 */
+        case ZB_NLME_STATUS_INDICATION:
+            LOG_INF("NLME status indication received");
+            break;
+
         default:
-            ZB_ERROR_CHECK(zigbee_default_signal_handler(bufid));
+            ZB_ERROR_CHECK(zigbee_default_signal_handler(bufid)); /* let the stack handle it the normal way*/
             break;
     }
 
     if (bufid) zb_buf_free(bufid); // if buffer not empty - clean
 }
+
+/* -------- shell -------- */
 
 static int cmd_toggle(const struct shell *sh, size_t argc, char **argv)
 {
@@ -280,6 +294,7 @@ static int cmd_open(const struct shell *sh, size_t argc, char **argv)
     shell_print(sh, "Sieć otwarta na dołączanie (180 s)");
     return 0;
 }
+
 
 SHELL_CMD_REGISTER(toggle, NULL, "Wyślij Toggle do urządzenia", cmd_toggle);
 SHELL_CMD_REGISTER(open,   NULL, "Otwórz sieć na dołączanie (180 s)", cmd_open);
