@@ -16,6 +16,7 @@ LOG_MODULE_REGISTER(zigbee_coordinator, LOG_LEVEL_INF);
 #define LED_NODE DT_ALIAS(led0)
 #define COORD_EP  10   /* endpoint On/Off clienta, taki sam jak ustawiliśmy w pierwszym kroku  */
 #define SW_NODE DT_ALIAS(sw0)             /* SW1 na donglu */
+#define MAX_NAME_LEN 32
 
 static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(LED_NODE, gpios);
 
@@ -25,7 +26,12 @@ static struct {
     zb_ieee_addr_t ieee;
     zb_uint16_t    short_addr;
     zb_uint8_t     remote_ep;   /* endpoint number on the remote device */
+    char name[MAX_NAME_LEN];
 } dev;
+
+/* --- naming devices --- */
+static void name_wait_work_handler(struct k_work *work);
+static K_WORK_DEFINE(name_wait_work, name_wait_work_handler);
 
 /* -------- coordinator's device profile -------- */
 
@@ -176,9 +182,9 @@ static void handle_device_joined(zb_uint16_t short_addr, const zb_ieee_addr_t ie
     dev.bound = false; /* reset bounding */
     dev.short_addr = short_addr;
     ZB_MEMCPY(dev.ieee, ieee, sizeof(zb_ieee_addr_t)); /* copy device IEEE address to our memory */
-    LOG_INF("New device 0x%04x — starting discovery", short_addr);
-    zb_buf_get_out_delayed(send_active_ep_req); /* request the buffer and schedule the first step of discovery */
-
+    // LOG_INF("New device 0x%04x — starting discovery", short_addr);
+    // zb_buf_get_out_delayed(send_active_ep_req); /* request the buffer and schedule the first step of discovery */
+    k_work_submit(&name_wait_work);          /* nie blokuj wątku ZBOSS! */
 }
 
 /* handles events from the ZBOSS thread */
@@ -268,36 +274,76 @@ void zboss_signal_handler(zb_bufid_t bufid)
 
 /* -------- shell -------- */
 
-static int cmd_toggle(const struct shell *sh, size_t argc, char **argv)
+/* this method will be called when the toggle command is received */
+static int cmd_toggle(const struct shell *sh, size_t argc, char **argv) /* let the function print message to the shell, number of words and words */
 {
-    if (!dev.bound) {
-        shell_error(sh, "Brak zbindowanego urządzenia");
-        return -EAGAIN;
+    // if (!dev.bound) {
+    //     shell_error(sh, "Brak zbindowanego urządzenia");
+    //     return -EAGAIN; /* stop the function and return an error code */
+    // }
+    // zb_buf_get_out_delayed(send_toggle_cmd);   /* asks zigbee for a buffer to call send toggle and actually send toggle command */
+    // shell_print(sh, "Toggle wysłany");
+    // return 0;
+
+    if (argc != 2) { shell_error(sh, "Użycie: toggle <nazwa>"); return -EINVAL; }
+    if (!dev.used || strcmp(dev.name, argv[1]) != 0) {
+        shell_error(sh, "Nie znam '%s'", argv[1]); return -ENOENT;
     }
-    zb_buf_get_out_delayed(send_toggle_cmd);   /* przeskok do wątku ZBOSS */
-    shell_print(sh, "Toggle wysłany");
+    if (!dev.bound) { shell_error(sh, "Jeszcze nie zbindowane"); return -EAGAIN; }
+    zb_buf_get_out_delayed(send_toggle_cmd);
+    shell_print(sh, "Toggle → %s", dev.name);
     return 0;
 }
 
-/* bdb_start_top_level_commissioning musi być wołane z wątku ZBOSS */
+/* opens the Zigbee network so new devices can join */
 static void do_open_network(zb_uint8_t param)
 {
     ARG_UNUSED(param);
-    zb_bdb_set_legacy_device_support(1);
-    bdb_start_top_level_commissioning(ZB_BDB_NETWORK_STEERING);
+    zb_bdb_set_legacy_device_support(1); /* support for older devices */
+    bdb_start_top_level_commissioning(ZB_BDB_NETWORK_STEERING); /* start network steering */
 }
 
+/* runs when we print open*/
 static int cmd_open(const struct shell *sh, size_t argc, char **argv)
 {
     ARG_UNUSED(argc); ARG_UNUSED(argv);
-    ZB_SCHEDULE_APP_CALLBACK(do_open_network, 0);
+    ZB_SCHEDULE_APP_CALLBACK(do_open_network, 0); /* zboss thread will run it when have time */
     shell_print(sh, "Sieć otwarta na dołączanie (180 s)");
     return 0;
 }
 
-
+/* tells the shell which commands exist and what function to run when someone types them */
 SHELL_CMD_REGISTER(toggle, NULL, "Wyślij Toggle do urządzenia", cmd_toggle);
 SHELL_CMD_REGISTER(open,   NULL, "Otwórz sieć na dołączanie (180 s)", cmd_open);
+
+/* -------- device naming -------- */
+static K_SEM_DEFINE(name_sem, 0, 1);
+static char pending_name[MAX_NAME_LEN];
+
+static void name_wait_work_handler(struct k_work *work)
+{
+    LOG_INF("New device 0x%04x — wpisz: name <nazwa>", dev.short_addr);
+
+    k_sem_take(&name_sem, K_FOREVER);        /* czekaj na shell (osobny wątek) */
+
+    strncpy(dev.name, pending_name, MAX_NAME_LEN - 1);
+    dev.name[MAX_NAME_LEN - 1] = '\0';
+    LOG_INF("Nazwa: %s → start discovery", dev.name);
+
+    zb_buf_get_out_delayed(send_active_ep_req);   /* discovery jak w Etapie 5 */
+}
+
+static int cmd_name(const struct shell *sh, size_t argc, char **argv)
+{
+    if (argc != 2) { shell_error(sh, "Użycie: name <nazwa>"); return -EINVAL; }
+    strncpy(pending_name, argv[1], MAX_NAME_LEN - 1);
+    pending_name[MAX_NAME_LEN - 1] = '\0';
+    k_sem_give(&name_sem);                    /* odblokuj worker */
+    shell_print(sh, "Nazwa '%s' przypisana", pending_name);
+    return 0;
+}
+
+SHELL_CMD_REGISTER(name, NULL, "Nadaj nazwę dołączonemu urządzeniu", cmd_name);
 
 int main(void)
 {
