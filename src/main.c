@@ -345,6 +345,24 @@ static int cmd_name(const struct shell *sh, size_t argc, char **argv)
 
 SHELL_CMD_REGISTER(name, NULL, "Nadaj nazwę dołączonemu urządzeniu", cmd_name);
 
+static int cmd_devices(const struct shell *sh, size_t argc, char **argv)
+{
+    if (!dev.used) {
+        shell_print(sh, "No device joined");
+        return 0;
+    }
+
+    shell_print(sh, "Short: 0x%04x, Name: %s, Bound: %s, Remote EP: %d",
+        dev.short_addr,
+        dev.name,
+        dev.bound ? "yes" : "no",
+        dev.remote_ep);
+
+    return 0;
+}
+
+SHELL_CMD_REGISTER(devices, NULL, "List joined device(s)", cmd_devices);
+
 int main(void)
 {
     LOG_INF("Starting Zigbee Coordinator");
