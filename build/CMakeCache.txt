@@ -24,7 +24,10 @@ APPLICATION_SOURCE_DIR:PATH=/home/goodbyte/projects/workspace_zigbee/zephyr/shar
 APP_DIR:PATH=/home/goodbyte/projects/workspace_zigbee/zigbee-coordinator
 
 //Selected board
-BOARD:STRING=nrf52840dongle/nrf52840
+BOARD:STRING=nrf52840dongle_nrf52840
+
+//Deprecated BOARD, provided by user
+BOARD_DEPRECATED:STRING=nrf52840dongle_nrf52840
 
 //Main board directory for board (nrf52840dongle)
 BOARD_DIR:PATH=/home/goodbyte/projects/workspace_zigbee/zephyr/boards/nordic/nrf52840dongle
@@ -33,7 +36,7 @@ BOARD_DIR:PATH=/home/goodbyte/projects/workspace_zigbee/zephyr/boards/nordic/nrf
 BOARD_EXTENSIONS:BOOL=ON
 
 //Selected board
-CACHED_BOARD:STRING=nrf52840dongle/nrf52840
+CACHED_BOARD:STRING=nrf52840dongle_nrf52840
 
 //Selected shield
 CACHED_SHIELD:STRING=
@@ -68,12 +71,6 @@ CMAKE_SKIP_RPATH:BOOL=NO
 // during the make.  This is useful for debugging only. With Visual
 // Studio IDE projects all commands are done without /nologo.
 CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
-
-//No help, variable specified on the command line.
-CONFIG_DEBUG_THREAD_INFO:UNINITIALIZED=y
-
-//No help, variable specified on the command line.
-NCS_TOOLCHAIN_VERSION:UNINITIALIZED=NONE
 
 //No help, variable specified on the command line.
 WEST_PYTHON:UNINITIALIZED=/home/goodbyte/ncs/toolchains/b77d8c1312/usr/local/bin/python3.12

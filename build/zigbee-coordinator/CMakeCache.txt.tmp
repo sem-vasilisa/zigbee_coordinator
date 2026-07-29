@@ -126,8 +126,8 @@ CMAKE_CXX_FLAGS_RELEASE:STRING=-O3 -DNDEBUG
 //Flags used by the CXX compiler during RELWITHDEBINFO builds.
 CMAKE_CXX_FLAGS_RELWITHDEBINFO:STRING=-O2 -g -DNDEBUG
 
-//Path to a program.
-CMAKE_C_COMPILER:FILEPATH=/home/goodbyte/ncs/toolchains/b77d8c1312/opt/zephyr-sdk/arm-zephyr-eabi/bin/arm-zephyr-eabi-gcc
+//C compiler
+CMAKE_C_COMPILER:STRING=/home/goodbyte/ncs/toolchains/b77d8c1312/opt/zephyr-sdk/arm-zephyr-eabi/bin/arm-zephyr-eabi-gcc
 
 //A wrapper around 'ar' adding the appropriate '--plugin' option
 // for the GCC compiler
@@ -185,9 +185,6 @@ CMAKE_GDB_NO_PY:FILEPATH=/home/goodbyte/ncs/toolchains/b77d8c1312/opt/zephyr-sdk
 
 //Install path prefix, prepended onto install directories.
 CMAKE_INSTALL_PREFIX:PATH=/usr/local
-
-//Program used to build from build.ninja files.
-CMAKE_MAKE_PROGRAM:FILEPATH=/home/goodbyte/ncs/toolchains/b77d8c1312/usr/local/bin/ninja
 
 //Flags used by the linker during the creation of modules during
 // all build types.
@@ -310,8 +307,8 @@ CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
 // CONF_FILE, use the CONF_FILE variable.
 CONF_FILE:STRING=/home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/prj.conf
 
-//Path to a program.
-DTC:FILEPATH=/home/goodbyte/ncs/toolchains/b77d8c1312/usr/bin/dtc
+//NCS Toolchain DTC
+DTC:FILEPATH=/home/goodbyte/ncs/toolchains/fbf7391cab/usr/local/bin/dtc
 
 //If desired, you can build the application using the DT configuration
 // settings specified in an alternate .overlay file using this
@@ -344,8 +341,11 @@ EXTRA_KCONFIG_TARGETS:UNINITIALIZED=
 //No help, variable specified on the command line.
 FORCED_CONF_FILE:FILEPATH=/home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/zigbee-coordinator/zephyr/.config.sysbuild
 
-//Git command line client
-GIT_EXECUTABLE:FILEPATH=/home/goodbyte/ncs/toolchains/b77d8c1312/usr/local/bin/git
+//NCS Toolchain Git
+GIT_EXECUTABLE:FILEPATH=/home/goodbyte/ncs/toolchains/fbf7391cab/usr/local/bin/git
+
+//NCS GNU ARM emb path
+GNUARMEMB_TOOLCHAIN_PATH:PATH=/home/goodbyte/ncs/toolchains/fbf7391cab
 
 //Linker BFD compatibility (compiler reported)
 GNULD_LINKER_IS_BFD:BOOL=ON
@@ -353,8 +353,8 @@ GNULD_LINKER_IS_BFD:BOOL=ON
 //GNU ld version
 GNULD_VERSION_STRING:STRING=2.38
 
-//Path to a program.
-GPERF:FILEPATH=/home/goodbyte/ncs/toolchains/b77d8c1312/usr/bin/gperf
+//NCS Toolchain gperf
+GPERF:FILEPATH=/home/goodbyte/ncs/toolchains/fbf7391cab/usr/local/bin/gperf
 
 //Path to a program.
 IMGTOOL:FILEPATH=/home/goodbyte/ncs/toolchains/b77d8c1312/usr/local/bin/imgtool
@@ -368,9 +368,6 @@ MBEDTLS_PSA_CRYPTO_CONFIG_FILE:STRING=nrf-psa-crypto-config.h
 //PSA crypto config file (PSA_NEED)
 MBEDTLS_PSA_CRYPTO_USER_CONFIG_FILE:STRING=nrf-psa-crypto-user-config.h
 
-//NCS Toolchain controlled by sysbuild
-NCS_TOOLCHAIN_VERSION:UNINITIALIZED=NONE
-
 //nrfxlib folder
 NRFXLIB_DIR:STRING=/home/goodbyte/projects/workspace_zigbee/nrfxlib
 
@@ -383,6 +380,9 @@ NRF_DIR:PATH=/home/goodbyte/projects/workspace_zigbee/nrf
 //nrf_security root folder
 NRF_SECURITY_ROOT:STRING=/home/goodbyte/projects/workspace_zigbee/nrf/subsys/nrf_security
 
+//The directory containing a CMake configuration file for NcsToolchain.
+NcsToolchain_DIR:PATH=/home/goodbyte/ncs/toolchains/fbf7391cab/cmake
+
 //oberon-psa-core folder
 OBERON_PSA_CORE_PATH:STRING=/home/goodbyte/projects/workspace_zigbee/modules/crypto/oberon-psa-crypto
 
@@ -391,6 +391,12 @@ OPENOCD:FILEPATH=OPENOCD-NOTFOUND
 
 //Path to a program.
 PAHOLE:FILEPATH=PAHOLE-NOTFOUND
+
+//NCS Toolchain protoc
+PROTOBUF_PROTOC_EXECUTABLE:STRING=/home/goodbyte/ncs/toolchains/b77d8c1312/usr/local/bin/cmake;-E;env;PATH=/home/goodbyte/ncs/toolchains/fbf7391cab/usr/local/bin:/home/goodbyte/.config/Code/User/globalStorage/github.copilot-chat/debugCommand:/home/goodbyte/.config/Code/User/globalStorage/github.copilot-chat/copilotCli:/home/goodbyte/ncs/toolchains/b77d8c1312/usr/bin:/home/goodbyte/ncs/toolchains/b77d8c1312/usr/bin:/home/goodbyte/ncs/toolchains/b77d8c1312/usr/local/bin:/home/goodbyte/ncs/toolchains/b77d8c1312/opt/bin:/home/goodbyte/ncs/toolchains/b77d8c1312/opt/nanopb/generator-bin:/home/goodbyte/ncs/toolchains/b77d8c1312/opt/zephyr-sdk/arm-zephyr-eabi/bin:/home/goodbyte/ncs/toolchains/b77d8c1312/opt/zephyr-sdk/riscv64-zephyr-elf/bin:/home/goodbyte/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin:/home/goodbyte/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin;/home/goodbyte/ncs/toolchains/fbf7391cab/opt/nanopb/generator-bin/protoc
+
+//NCS Toolchain protoc
+PROTOC:STRING=/home/goodbyte/ncs/toolchains/b77d8c1312/usr/local/bin/cmake;-E;env;PATH=/home/goodbyte/ncs/toolchains/fbf7391cab/usr/local/bin:/home/goodbyte/.config/Code/User/globalStorage/github.copilot-chat/debugCommand:/home/goodbyte/.config/Code/User/globalStorage/github.copilot-chat/copilotCli:/home/goodbyte/ncs/toolchains/b77d8c1312/usr/bin:/home/goodbyte/ncs/toolchains/b77d8c1312/usr/bin:/home/goodbyte/ncs/toolchains/b77d8c1312/usr/local/bin:/home/goodbyte/ncs/toolchains/b77d8c1312/opt/bin:/home/goodbyte/ncs/toolchains/b77d8c1312/opt/nanopb/generator-bin:/home/goodbyte/ncs/toolchains/b77d8c1312/opt/zephyr-sdk/arm-zephyr-eabi/bin:/home/goodbyte/ncs/toolchains/b77d8c1312/opt/zephyr-sdk/riscv64-zephyr-elf/bin:/home/goodbyte/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin:/home/goodbyte/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin;/home/goodbyte/ncs/toolchains/fbf7391cab/opt/nanopb/generator-bin/protoc
 
 //Path used for generated PSA crypto configuratiosn for the interface
 PSA_CRYPTO_CONFIG_INTERFACE_PATH:STRING=/home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/zigbee-coordinator/generated/interface_nrf_security_psa
@@ -404,6 +410,9 @@ PSA_CRYPTO_EXTERNAL_CORE:BOOL=ON
 //Path to a program.
 PUNCOVER:FILEPATH=PUNCOVER-NOTFOUND
 
+//NCS Toolchain Python
+PYTHON_EXECUTABLE:FILEPATH=/home/goodbyte/ncs/toolchains/fbf7391cab/usr/local/bin/python3
+
 //Value Computed by CMake
 Picolibc_BINARY_DIR:STATIC=/home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/zigbee-coordinator/modules/picolibc
 
@@ -413,8 +422,8 @@ Picolibc_IS_TOP_LEVEL:STATIC=OFF
 //Value Computed by CMake
 Picolibc_SOURCE_DIR:STATIC=/home/goodbyte/projects/workspace_zigbee/modules/lib/picolibc
 
-//Path to a program.
-Python3_EXECUTABLE:FILEPATH=/home/goodbyte/ncs/toolchains/b77d8c1312/usr/local/bin/python
+//NCS Toolchain Python
+Python3_EXECUTABLE:FILEPATH=/home/goodbyte/ncs/toolchains/fbf7391cab/usr/local/bin/python3
 
 //Path to the SoC directory.
 SOC_FULL_DIR:PATH=/home/goodbyte/projects/workspace_zigbee/zephyr/soc/nordic
@@ -442,6 +451,12 @@ ZEPHYR_BASE:PATH=/home/goodbyte/projects/workspace_zigbee/zephyr
 
 //Path to Zephyr git repository index file
 ZEPHYR_GIT_INDEX:PATH=/home/goodbyte/projects/workspace_zigbee/zephyr/.git/index
+
+//NCS Zephyr SDK install dir
+ZEPHYR_SDK_INSTALL_DIR:PATH=/home/goodbyte/ncs/toolchains/fbf7391cab/opt/zephyr-sdk
+
+//NCS Toolchain Variant
+ZEPHYR_TOOLCHAIN_VARIANT:STRING=zephyr
 
 //Value Computed by CMake
 Zephyr-Kernel_BINARY_DIR:STATIC=/home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/zigbee-coordinator
@@ -482,7 +497,6 @@ zigbee_coordinator_SOURCE_DIR:STATIC=/home/goodbyte/projects/workspace_zigbee/zi
 BOARD_DIRECTORIES:INTERNAL=/home/goodbyte/projects/workspace_zigbee/zephyr/boards/nordic/nrf52840dongle
 //DT bindings root directories
 CACHED_DTS_ROOT_BINDINGS:INTERNAL=/home/goodbyte/projects/workspace_zigbee/nrf/dts/bindings;/home/goodbyte/projects/workspace_zigbee/zephyr/dts/bindings
-CLI_CONFIG_DEBUG_THREAD_INFO:INTERNAL=y
 //ADVANCED property for variable: CMAKE_ADDR2LINE
 CMAKE_ADDR2LINE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_AR
@@ -534,6 +548,8 @@ CMAKE_CXX_FLAGS_MINSIZEREL-ADVANCED:INTERNAL=1
 CMAKE_CXX_FLAGS_RELEASE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_CXX_FLAGS_RELWITHDEBINFO
 CMAKE_CXX_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_C_COMPILER
+CMAKE_C_COMPILER-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_C_COMPILER_AR
 CMAKE_C_COMPILER_AR-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_C_COMPILER_RANLIB
@@ -575,8 +591,8 @@ CMAKE_GENERATOR_TOOLSET:INTERNAL=
 //Source directory with the top level CMakeLists.txt file for this
 // project
 CMAKE_HOME_DIRECTORY:INTERNAL=/home/goodbyte/projects/workspace_zigbee/zigbee-coordinator
-//ADVANCED property for variable: CMAKE_MAKE_PROGRAM
-CMAKE_MAKE_PROGRAM-ADVANCED:INTERNAL=1
+//NCS Toolchain ninja
+CMAKE_MAKE_PROGRAM:INTERNAL=/home/goodbyte/ncs/toolchains/fbf7391cab/usr/local/bin/ninja
 //ADVANCED property for variable: CMAKE_MODULE_LINKER_FLAGS
 CMAKE_MODULE_LINKER_FLAGS-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_MODULE_LINKER_FLAGS_DEBUG
@@ -636,11 +652,11 @@ CMAKE_VERBOSE_MAKEFILE-ADVANCED:INTERNAL=1
 //The build type
 CONF_FILE_BUILD_TYPE:INTERNAL=
 //Details about finding Dtc
-FIND_PACKAGE_MESSAGE_DETAILS_Dtc:INTERNAL=[/home/goodbyte/ncs/toolchains/b77d8c1312/usr/bin/dtc][v1.5.0(1.4.6)]
+FIND_PACKAGE_MESSAGE_DETAILS_Dtc:INTERNAL=[/home/goodbyte/ncs/toolchains/fbf7391cab/usr/local/bin/dtc][v1.5.0(1.4.6)]
 //Details about finding GnuLd
 FIND_PACKAGE_MESSAGE_DETAILS_GnuLd:INTERNAL=[/home/goodbyte/ncs/toolchains/b77d8c1312/opt/zephyr-sdk/arm-zephyr-eabi/arm-zephyr-eabi/bin/ld.bfd][v2.38()]
 //Details about finding Python3
-FIND_PACKAGE_MESSAGE_DETAILS_Python3:INTERNAL=[/home/goodbyte/ncs/toolchains/b77d8c1312/usr/local/bin/python][cfound components: Interpreter ][v3.12.4(3.8)]
+FIND_PACKAGE_MESSAGE_DETAILS_Python3:INTERNAL=[/home/goodbyte/ncs/toolchains/fbf7391cab/usr/local/bin/python3][cfound components: Interpreter ][v3.12.4(3.8)]
 //ADVANCED property for variable: GIT_EXECUTABLE
 GIT_EXECUTABLE-ADVANCED:INTERNAL=1
 //Zephyr hardware model version
@@ -657,19 +673,11 @@ SOC_DIRECTORIES:INTERNAL=/home/goodbyte/projects/workspace_zigbee/zephyr/soc/nor
 //SoC Linker script
 SOC_LINKER_SCRIPT:INTERNAL=/home/goodbyte/projects/workspace_zigbee/zephyr/include/zephyr/arch/arm/cortex_m/scripts/linker.ld
 //West
-WEST:INTERNAL=/home/goodbyte/ncs/toolchains/b77d8c1312/usr/local/bin/python;-m;west
+WEST:INTERNAL=/home/goodbyte/ncs/toolchains/fbf7391cab/usr/local/bin/python3;-m;west
 //shared var
 ZEPHYR_BINARY_DIR:INTERNAL=/home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/zigbee-coordinator/zephyr
-//Cached environment variable ZEPHYR_SDK_INSTALL_DIR
-ZEPHYR_SDK_INSTALL_DIR:INTERNAL=/home/goodbyte/ncs/toolchains/b77d8c1312/opt/zephyr-sdk
-//Cached environment variable ZEPHYR_TOOLCHAIN_VARIANT
-ZEPHYR_TOOLCHAIN_VARIANT:INTERNAL=zephyr
-_Python3_EXECUTABLE:INTERNAL=/home/goodbyte/ncs/toolchains/b77d8c1312/usr/local/bin/python
+_Python3_EXECUTABLE:INTERNAL=/home/goodbyte/ncs/toolchains/fbf7391cab/usr/local/bin/python3
 //Python3 Properties
 _Python3_INTERPRETER_PROPERTIES:INTERNAL=Python;3;12;4;64;;cpython-312-x86_64-linux-gnu;/home/goodbyte/ncs/toolchains/b77d8c1312/usr/local/lib/python3.12;/home/goodbyte/ncs/toolchains/b77d8c1312/usr/local/lib/python3.12;/home/goodbyte/ncs/toolchains/b77d8c1312/usr/local/lib/python3.12/site-packages;/home/goodbyte/ncs/toolchains/b77d8c1312/usr/local/lib/python3.12/site-packages
-_Python3_INTERPRETER_SIGNATURE:INTERNAL=043c839704fc2fba3b6a1e6608116f1c
-//Test check_C__nostartfiles__nostdlib__isystem___home_goodbyte_ncs_toolchains_b77d8c1312_opt_zephyr_sdk_arm_zephyr_eabi_bin____lib_gcc_arm_zephyr_eabi_12_2_0_include___isystem___home_goodbyte_ncs_toolchains_b77d8c1312_opt_zephyr_sdk_arm_zephyr_eabi_bin____lib_gcc_arm_zephyr_eabi_12_2_0_include_fixed___Wl___unresolved_symbols_ignore_in_object_files__Wl___entry_0__fuse_ld_bfd__mcpu_cortex_m4__mthumb__mabi_aapcs__mfpu_fpv4_sp_d16__mfloat_abi_hard__mfp16_format_ieee__fuse_ld_bfd
-check_C__nostartfiles__nostdlib__isystem___home_goodbyte_ncs_toolchains_b77d8c1312_opt_zephyr_sdk_arm_zephyr_eabi_bin____lib_gcc_arm_zephyr_eabi_12_2_0_include___isystem___home_goodbyte_ncs_toolchains_b77d8c1312_opt_zephyr_sdk_arm_zephyr_eabi_bin____lib_gcc_arm_zephyr_eabi_12_2_0_include_fixed___Wl___unresolved_symbols_ignore_in_object_files__Wl___entry_0__fuse_ld_bfd__mcpu_cortex_m4__mthumb__mabi_aapcs__mfpu_fpv4_sp_d16__mfloat_abi_hard__mfp16_format_ieee__fuse_ld_bfd:INTERNAL=1
-//Test check_fmacro_prefix_map__home_goodbyte_projects_workspace_zigbee_zigbee_coordinator_CMAKE_SOURCE_DIR_C__nostartfiles__nostdlib__isystem___home_goodbyte_ncs_toolchains_b77d8c1312_opt_zephyr_sdk_arm_zephyr_eabi_bin____lib_gcc_arm_zephyr_eabi_12_2_0_include___isystem___home_goodbyte_ncs_toolchains_b77d8c1312_opt_zephyr_sdk_arm_zephyr_eabi_bin____lib_gcc_arm_zephyr_eabi_12_2_0_include_fixed___Wl___unresolved_symbols_ignore_in_object_files__Wl___entry_0__fuse_ld_bfd
-check_fmacro_prefix_map__home_goodbyte_projects_workspace_zigbee_zigbee_coordinator_CMAKE_SOURCE_DIR_C__nostartfiles__nostdlib__isystem___home_goodbyte_ncs_toolchains_b77d8c1312_opt_zephyr_sdk_arm_zephyr_eabi_bin____lib_gcc_arm_zephyr_eabi_12_2_0_include___isystem___home_goodbyte_ncs_toolchains_b77d8c1312_opt_zephyr_sdk_arm_zephyr_eabi_bin____lib_gcc_arm_zephyr_eabi_12_2_0_include_fixed___Wl___unresolved_symbols_ignore_in_object_files__Wl___entry_0__fuse_ld_bfd:INTERNAL=1
+_Python3_INTERPRETER_SIGNATURE:INTERNAL=1b1c4e44386777a43096ceb2636a8471
 

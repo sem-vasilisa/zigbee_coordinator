@@ -35,7 +35,6 @@ cmake:
     files:
      - /home/goodbyte/projects/workspace_zigbee/zephyr/boards/nordic/nrf52840dongle/nrf52840dongle_nrf52840_defconfig
      - /home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/prj.conf
-     - /home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/zigbee-coordinator/zephyr/misc/generated/extra_kconfig_options.conf
      - /home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/build/zigbee-coordinator/zephyr/.config.sysbuild
     user-files:
      - /home/goodbyte/projects/workspace_zigbee/zigbee-coordinator/prj.conf

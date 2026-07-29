@@ -64,7 +64,7 @@ static void app_clusters_attr_init(void)
 /* --- create a network sygnalized by led --- */
 static volatile bool network_up = false; // is network ready
 
-/* -------- controlling the bulb with a button + discovery -------- */
+/* -------- controlling the bulb with a button -------- */
 
 /*  list of endpoints of the discovered device  */
 static struct { zb_uint8_t eps[16], count, idx; } disc; /* eps is a list of enpoint numbers the bulb reported, count how many were returned and idx which one we're currently checking*/
@@ -74,7 +74,6 @@ static void send_simple_desc_req(zb_bufid_t bufid); /* sends a ZDO request about
 /* if binding succeeds, handle the response */
 static void bind_cb(zb_bufid_t bufid)
 {
-    LOG_INF("Discovery: bind_cb received");
     zb_zdo_bind_resp_t *r = (zb_zdo_bind_resp_t *)zb_buf_begin(bufid);
     if (r->status == ZB_ZDP_STATUS_SUCCESS) {
         dev.bound = true;
@@ -88,7 +87,6 @@ static void bind_cb(zb_bufid_t bufid)
 /* binding - connect ep with cluster*/
 static void do_bind(zb_bufid_t bufid)
 {
-    LOG_INF("Discovery: sending Bind_req");
     zb_zdo_bind_req_param_t *req = ZB_BUF_GET_PARAM(bufid, zb_zdo_bind_req_param_t); /* get a pointer to the bind request parameters */
     zb_ieee_addr_t my_ieee;
     zb_get_long_address(my_ieee);
@@ -102,10 +100,31 @@ static void do_bind(zb_bufid_t bufid)
     zb_zdo_bind_req(bufid, bind_cb);
 }
 
+/* binding for temperature cluster  - connect ep with cluster
+ * Unlike do_bind() (On/Off), here the END DEVICE is the binding source: its
+ * reporting engine consults ITS OWN binding table to route autonomous Report
+ * Attributes commands, so the entry (and the Bind_req itself) must target the
+ * end device, not the coordinator. See zb_zdo_bind_req_param_t doc comments
+ * and the ed1->ed2 example in zboss_api_zdo.h (req_dst_addr == src device). */
+static void do_bind_temp(zb_bufid_t bufid)
+{
+    LOG_INF("Discovery: sending Bind_req");
+    zb_zdo_bind_req_param_t *req = ZB_BUF_GET_PARAM(bufid, zb_zdo_bind_req_param_t); /* get a pointer to the bind request parameters */
+    zb_ieee_addr_t my_ieee;
+    zb_get_long_address(my_ieee);
+    ZB_MEMCPY(req->src_address, dev.ieee, sizeof(zb_ieee_addr_t)); /* source = end device (generates the reports) */
+    req->src_endp      = dev.remote_ep; /* source endpoint on the end device */
+    req->cluster_id    = ZB_ZCL_CLUSTER_ID_TEMP_MEASUREMENT; /* which cluster this binding is for*/
+    req->dst_addr_mode = ZB_BIND_DST_ADDR_MODE_64_BIT_EXTENDED; /* destination address mode */
+    ZB_MEMCPY(&req->dst_address.addr_long, my_ieee, sizeof(zb_ieee_addr_t)); /* destination = coordinator */
+    req->dst_endp     = COORD_EP;
+    req->req_dst_addr = dev.short_addr;   /* Bind_req must be unicast to the end device so IT stores the entry */
+    zb_zdo_bind_req(bufid, bind_cb);
+}
+
 /* response to the cluster request*/
 static void simple_desc_cb(zb_bufid_t bufid)
 {
-    LOG_INF("Discovery: simple_desc_cb received");
     zb_zdo_simple_desc_resp_t *r = (zb_zdo_simple_desc_resp_t *)zb_buf_begin(bufid);
     bool found = false;
     if (r->hdr.status == ZB_ZDP_STATUS_SUCCESS) {
@@ -123,7 +142,6 @@ static void simple_desc_cb(zb_bufid_t bufid)
 /* sends a ZDO request asking about endpoints clusters */
 static void send_simple_desc_req(zb_bufid_t bufid)
 {
-    LOG_INF("Discovery: sending Simple_Desc_req for EP %d", disc.eps[disc.idx]);
     zb_zdo_simple_desc_req_t *req = (zb_zdo_simple_desc_req_t *)zb_buf_initial_alloc(bufid, sizeof(zb_zdo_simple_desc_req_t)); /* reseres place in the buffer for the request */
     req->nwk_addr = dev.short_addr; /* fill in which device are we asking, by short address */
     req->endpoint = disc.eps[disc.idx++]; /* fill in the endpoint we are asking about */
@@ -133,7 +151,6 @@ static void send_simple_desc_req(zb_bufid_t bufid)
 /* gets the list of endpoints from end device and saves it */
 static void active_ep_cb(zb_bufid_t bufid)
 {
-    LOG_INF("Discovery: active_ep_cb received");
     zb_zdo_ep_resp_t *r = (zb_zdo_ep_resp_t *)zb_buf_begin(bufid); // gets from the buffer reads header
     zb_uint8_t *list = (zb_uint8_t *)(r + 1); // after the header, gets the list of endpoints that were returned
     disc.count = MIN(r->ep_count, ARRAY_SIZE(disc.eps)); // how many endpoints were returned, but not more than the size of our array
@@ -146,7 +163,6 @@ static void active_ep_cb(zb_bufid_t bufid)
 /* what endpoints do we have */
 static void send_active_ep_req(zb_bufid_t bufid)
 {
-    LOG_INF("Discovery: sending Active_EP_req");
     zb_zdo_active_ep_req_t *req = (zb_zdo_active_ep_req_t *)zb_buf_initial_alloc(bufid, sizeof(zb_zdo_active_ep_req_t));
     req->nwk_addr = dev.short_addr;
     zb_zdo_active_ep_req(bufid, active_ep_cb);
@@ -183,7 +199,6 @@ static void handle_device_joined(zb_uint16_t short_addr, const zb_ieee_addr_t ie
     //     ieee[3], ieee[2], ieee[1], ieee[0]);
     // LOG_INF("=====================================================");
 
-    LOG_INF("handle_device_joined called, dev.used=%d", dev.used);
     if (dev.used) return;                 /* handels one device at a time */
     dev.used = true; /* occupied */
     dev.bound = false; /* reset bounding */
@@ -237,15 +252,15 @@ void zboss_signal_handler(zb_bufid_t bufid)
             break;
 
         case ZB_ZDO_SIGNAL_DEVICE_ANNCE: {        /* end device get's an id */
-            zb_zdo_signal_device_annce_params_t *a = ZB_ZDO_SIGNAL_GET_PARAMS(sg_p, zb_zdo_signal_device_annce_params_t); // treat raw data sg_p as a deice annce
-            LOG_INF("DEVICE_ANNCE received: short=0x%04x", a->device_short_addr);
+            zb_zdo_signal_device_annce_params_t *a =
+                ZB_ZDO_SIGNAL_GET_PARAMS(sg_p, zb_zdo_signal_device_annce_params_t); // treat raw data sg_p as a deice annce
             handle_device_joined(a->device_short_addr, a->ieee_addr);// gets the short and long address and calls the function to handle it
         } break;
 
         case ZB_ZDO_SIGNAL_DEVICE_AUTHORIZED: {    /* device authorized and now is a prt of network */
-            zb_zdo_signal_device_authorized_params_t *auth = ZB_ZDO_SIGNAL_GET_PARAMS(sg_p, zb_zdo_signal_device_authorized_params_t); // extracts the authorization parameters from the signal
+            zb_zdo_signal_device_authorized_params_t *auth =
+                ZB_ZDO_SIGNAL_GET_PARAMS(sg_p, zb_zdo_signal_device_authorized_params_t); // extracts the authorization parameters from the signal
             // normal login from new zigbee success || older device login success, puts it into a normal state and calls the function to handle it
-            LOG_INF("DEVICE_AUTHORIZED received: short=0x%04x, status=%d",auth->short_addr, auth->authorization_status);
             if (auth->authorization_status == ZB_ZDO_TCLK_AUTHORIZATION_SUCCESS ||
                 auth->authorization_status == ZB_ZDO_LEGACY_DEVICE_AUTHORIZATION_SUCCESS) {
                 handle_device_joined(auth->short_addr, auth->long_addr);
@@ -272,7 +287,6 @@ void zboss_signal_handler(zb_bufid_t bufid)
             break;
 
         default:
-            // LOG_INF("Unhandled signal received: %d, status=%d", sig, status);
             ZB_ERROR_CHECK(zigbee_default_signal_handler(bufid)); /* let the stack handle it the normal way*/
             break;
     }
@@ -293,11 +307,11 @@ static int cmd_toggle(const struct shell *sh, size_t argc, char **argv) /* let t
     // shell_print(sh, "Toggle wysłany");
     // return 0;
 
-    if (argc != 2) { shell_error(sh, "Use: toggle <name>"); return -EINVAL; }
+    if (argc != 2) { shell_error(sh, "Użycie: toggle <nazwa>"); return -EINVAL; }
     if (!dev.used || strcmp(dev.name, argv[1]) != 0) {
-        shell_error(sh, "Don't know '%s'", argv[1]); return -ENOENT;
+        shell_error(sh, "Nie znam '%s'", argv[1]); return -ENOENT;
     }
-    if (!dev.bound) { shell_error(sh, "Is not built yet"); return -EAGAIN; }
+    if (!dev.bound) { shell_error(sh, "Jeszcze nie zbindowane"); return -EAGAIN; }
     zb_buf_get_out_delayed(send_toggle_cmd);
     shell_print(sh, "Toggle → %s", dev.name);
     return 0;
@@ -316,44 +330,47 @@ static int cmd_open(const struct shell *sh, size_t argc, char **argv)
 {
     ARG_UNUSED(argc); ARG_UNUSED(argv);
     ZB_SCHEDULE_APP_CALLBACK(do_open_network, 0); /* zboss thread will run it when have time */
-    shell_print(sh, "Network is open for joining (180 sec)");
+    shell_print(sh, "Sieć otwarta na dołączanie (180 s)");
     return 0;
 }
 
 /* tells the shell which commands exist and what function to run when someone types them */
-SHELL_CMD_REGISTER(toggle, NULL, "Send toggle to device", cmd_toggle);
-SHELL_CMD_REGISTER(open,   NULL, "Open network for joining (180 sec)", cmd_open);
+SHELL_CMD_REGISTER(toggle, NULL, "Wyślij Toggle do urządzenia", cmd_toggle);
+SHELL_CMD_REGISTER(open,   NULL, "Otwórz sieć na dołączanie (180 s)", cmd_open);
 
-/* -------- shell device naming -------- */
+/* -------- device naming -------- */
 static K_SEM_DEFINE(name_sem, 0, 1);
 static char pending_name[MAX_NAME_LEN];
 
 static void name_wait_work_handler(struct k_work *work)
 {
-    LOG_INF("New device 0x%04x — enter: name <name>", dev.short_addr);
+    LOG_INF("New device 0x%04x — wpisz: name <nazwa>", dev.short_addr);
 
     k_sem_take(&name_sem, K_FOREVER);        /* czekaj na shell (osobny wątek) */
 
     strncpy(dev.name, pending_name, MAX_NAME_LEN - 1);
     dev.name[MAX_NAME_LEN - 1] = '\0';
-    LOG_INF("Name: %s → start discovery", dev.name);
+    LOG_INF("Nazwa: %s → start discovery", dev.name);
 
     zb_buf_get_out_delayed(send_active_ep_req);   /* discovery jak w Etapie 5 */
 }
 
 static int cmd_name(const struct shell *sh, size_t argc, char **argv)
 {
-    if (argc != 2) { shell_error(sh, "Use: name <nazwa>"); return -EINVAL; }
+<<<<<<< Updated upstream
+    if (argc != 2) { shell_error(sh, "Użycie: name <nazwa>"); return -EINVAL; }
+=======
+    if (argc != 2) { shell_error(sh, "Use: name <name>"); return -EINVAL; }
+>>>>>>> Stashed changes
     strncpy(pending_name, argv[1], MAX_NAME_LEN - 1);
     pending_name[MAX_NAME_LEN - 1] = '\0';
     k_sem_give(&name_sem);                    /* odblokuj worker */
-    shell_print(sh, "Name '%s' assigned", pending_name);
+    shell_print(sh, "Nazwa '%s' przypisana", pending_name);
     return 0;
 }
 
-SHELL_CMD_REGISTER(name, NULL, "Give the connected device a name", cmd_name);
+SHELL_CMD_REGISTER(name, NULL, "Nadaj nazwę dołączonemu urządzeniu", cmd_name);
 
-/* ------ shell print connected devices ------ */
 static int cmd_devices(const struct shell *sh, size_t argc, char **argv)
 {
     if (!dev.used) {
@@ -372,6 +389,8 @@ static int cmd_devices(const struct shell *sh, size_t argc, char **argv)
 
 SHELL_CMD_REGISTER(devices, NULL, "List joined device(s)", cmd_devices);
 
+<<<<<<< Updated upstream
+=======
 /* ------ shell temperature request ------ */
 static void send_temp_read_req(zb_bufid_t bufid)
 {
@@ -383,11 +402,12 @@ static void send_temp_read_req(zb_bufid_t bufid)
     ZB_ZCL_GENERAL_SEND_READ_ATTR_REQ(bufid, cmd_ptr, dev.short_addr, ZB_APS_ADDR_MODE_16_ENDP_PRESENT, dev.remote_ep, COORD_EP, ZB_AF_HA_PROFILE_ID, ZB_ZCL_CLUSTER_ID_TEMP_MEASUREMENT, NULL);
 }
 
+/* ------ shell temperature command ------ */
 static int cmd_temp(const struct shell *sh, size_t argc, char **argv)
 {
-    if (!dev.bound) { shell_error(sh, "Jeszcze nie zbindowane"); return -EAGAIN; }
+    if (!dev.bound) { shell_error(sh, "Not defined yet"); return -EAGAIN; }
     zb_buf_get_out_delayed(send_temp_read_req);
-    shell_print(sh, "Wysłano zapytanie o temperaturę");
+    shell_print(sh, "Temperature request is sent...");
     return 0;
 }
 
@@ -396,6 +416,7 @@ SHELL_CMD_REGISTER(temp, NULL, "Current temperature...", cmd_temp);
 static zb_uint8_t coord_ep_handler(zb_bufid_t bufid)
 {
     zb_zcl_parsed_hdr_t *zcl_hdr = ZB_BUF_GET_PARAM(bufid, zb_zcl_parsed_hdr_t);
+    zb_zcl_report_attr_req_t *rep;
 
     if (zcl_hdr->cluster_id == ZB_ZCL_CLUSTER_ID_TEMP_MEASUREMENT &&
         zcl_hdr->cmd_id == ZB_ZCL_CMD_READ_ATTRIB_RESP) {
@@ -411,12 +432,90 @@ static zb_uint8_t coord_ep_handler(zb_bufid_t bufid)
         }
 
         zb_buf_free(bufid);
-        return ZB_TRUE; // we handled it
+        return ZB_TRUE; 
+    }
+    else if(zcl_hdr->cluster_id == ZB_ZCL_CLUSTER_ID_TEMP_MEASUREMENT && zcl_hdr->cmd_id == ZB_ZCL_CMD_REPORT_ATTRIB){
+        ZB_ZCL_GENERAL_GET_NEXT_REPORT_ATTR_REQ(bufid, rep);
+        if(rep != NULL && rep->attr_id == ZB_ZCL_ATTR_TEMP_MEASUREMENT_VALUE_ID){
+            zb_int16_t raw = *(zb_int16_t *)rep->attr_value;
+            LOG_INF("Temperature: %d.%02d C", raw / 100, (raw < 0 ? -raw : raw) % 100);
+        }
+        else {
+            LOG_WRN("Report attribute parse failed or unexpected attr_id");
+        }
+
+        zb_buf_free(bufid); 
+        return ZB_TRUE;
+    }
+    else if (zcl_hdr->cmd_id == ZB_ZCL_CMD_DEFAULT_RESP) {
+        zb_zcl_default_resp_payload_t *payload = ZB_ZCL_READ_DEFAULT_RESP(bufid);
+        if (payload != NULL) {
+            LOG_INF("Default Response: command_id=0x%02x, status=%d", payload->command_id, payload->status);
+        } 
+        else {
+            LOG_WRN("Default Response: malformed payload");
+        }
+
+        zb_buf_free(bufid);
+        return ZB_TRUE;
+    }
+    else if (zcl_hdr->cluster_id == ZB_ZCL_CLUSTER_ID_TEMP_MEASUREMENT && zcl_hdr->cmd_id == ZB_ZCL_CMD_CONFIG_REPORT_RESP) {
+        zb_zcl_configure_reporting_res_t *cfg_res;
+        ZB_ZCL_GENERAL_GET_NEXT_CONFIGURE_REPORTING_RES(bufid, cfg_res);
+
+        if (cfg_res != NULL) {
+            if (cfg_res->status == ZB_ZCL_STATUS_SUCCESS) {
+                LOG_INF("Configure Reporting: SUCCESS");
+            } else {
+                LOG_WRN("Configure Reporting FAILED: status=%d, attr_id=0x%04x",
+                        cfg_res->status, cfg_res->attr_id);
+            }
+        } else {
+            LOG_WRN("Configure Reporting response: malformed payload");
+        }
+
+        zb_buf_free(bufid);
+        return ZB_TRUE;
     }
 
-    return ZB_FALSE; // not ours, let ZBOSS handle it normally
+    return ZB_FALSE; 
 }
 
+static void send_configure_reporting_req(zb_bufid_t bufid){
+    if (!dev.bound) { zb_buf_free(bufid); return; }
+
+    zb_uint8_t *cmd_ptr;
+    ZB_ZCL_GENERAL_INIT_CONFIGURE_REPORTING_SRV_REQ(bufid, cmd_ptr, ZB_ZCL_ENABLE_DEFAULT_RESPONSE);
+    zb_int16_t report_change = 20;
+    zb_uint16_t min_interval = 2;
+    zb_uint16_t max_interval = 10;
+    ZB_ZCL_GENERAL_ADD_SEND_REPORT_CONFIGURE_REPORTING_REQ(cmd_ptr, ZB_ZCL_ATTR_TEMP_MEASUREMENT_VALUE_ID, ZB_ZCL_ATTR_TYPE_S16, min_interval, max_interval, &report_change);
+    ZB_ZCL_GENERAL_SEND_CONFIGURE_REPORTING_REQ(bufid, cmd_ptr, dev.short_addr, ZB_APS_ADDR_MODE_16_ENDP_PRESENT, dev.remote_ep, COORD_EP, ZB_AF_HA_PROFILE_ID, ZB_ZCL_CLUSTER_ID_TEMP_MEASUREMENT, NULL);
+}
+
+/* ------ shell command to make end device send temp automatically every 60s ------ */
+static int cmd_configreport(const struct shell *sh, size_t argc, char **argv)
+{
+    if (!dev.bound) { shell_error(sh, "Not defined yet"); return -EAGAIN; }
+    zb_buf_get_out_delayed(send_configure_reporting_req);
+    shell_print(sh, "Configure reporting request sent");
+    return 0;
+}
+
+SHELL_CMD_REGISTER(configreport, NULL, "Configure automatic temperature reporting", cmd_configreport);
+
+/* ------ shell command for bind temp cluster ------ */
+static int cmd_bindtemp(const struct shell *sh, size_t argc, char **argv)
+{
+    if (!dev.used) { shell_error(sh, "No device known"); return -EAGAIN; }
+    zb_buf_get_out_delayed(do_bind_temp);
+    shell_print(sh, "Temperature cluster bind request sent");
+    return 0;
+}
+
+SHELL_CMD_REGISTER(bindtemp, NULL, "Bind temperature cluster", cmd_bindtemp);
+
+>>>>>>> Stashed changes
 int main(void)
 {
     LOG_INF("Starting Zigbee Coordinator");
@@ -429,7 +528,6 @@ int main(void)
     gpio_add_callback(button.port, &button_cb);
 
     ZB_AF_REGISTER_DEVICE_CTX(&coordinator_ctx);
-    ZB_AF_SET_ENDPOINT_HANDLER(COORD_EP, coord_ep_handler);
     app_clusters_attr_init(); // starting values from the device context
     zigbee_enable();
 
