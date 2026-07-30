@@ -363,6 +363,29 @@ static int cmd_devices(const struct shell *sh, size_t argc, char **argv)
 
 SHELL_CMD_REGISTER(devices, NULL, "List joined device(s)", cmd_devices);
 
+static zb_uint8_t coord_ep_handler(zb_bufid_t bufid)
+{
+    zb_zcl_parsed_hdr_t *zcl_hdr = ZB_BUF_GET_PARAM(bufid, zb_zcl_parsed_hdr_t); /* read frame header from the buffer */
+
+    if (zcl_hdr->cluster_id == ZB_ZCL_CLUSTER_ID_ON_OFF && zcl_hdr->cmd_id == ZB_ZCL_CMD_REPORT_ATTRIB) {
+
+        zb_zcl_report_attr_req_t *rep;
+        ZB_ZCL_GENERAL_GET_NEXT_REPORT_ATTR_REQ(bufid, rep); /* get data out of the frame, where rep will have info about which attribute is this, what type and the raw bytes */
+
+        if (rep != NULL && rep->attr_id == ZB_ZCL_ATTR_ON_OFF_ON_OFF_ID) {
+            zb_uint8_t value = *(zb_uint8_t *)rep->attr_value; /* read actual data send by the end device */
+            LOG_INF("Test value received: %d", value);
+        } else {
+            LOG_WRN("Report attribute parse failed or unexpected attr_id");
+        }
+
+        zb_buf_free(bufid);
+        return ZB_TRUE;
+    }
+
+    return ZB_FALSE;
+}
+
 int main(void)
 {
     LOG_INF("Starting Zigbee Coordinator");
@@ -375,6 +398,7 @@ int main(void)
     gpio_add_callback(button.port, &button_cb);
 
     ZB_AF_REGISTER_DEVICE_CTX(&coordinator_ctx);
+    ZB_AF_SET_ENDPOINT_HANDLER(COORD_EP, coord_ep_handler);
     app_clusters_attr_init(); // starting values from the device context
     zigbee_enable();
 
